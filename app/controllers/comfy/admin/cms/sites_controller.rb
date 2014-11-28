@@ -7,9 +7,12 @@ class Comfy::Admin::Cms::SitesController < Comfy::Admin::Cms::BaseController
   before_action :load_site,   :only => [:edit, :update, :destroy]
 
   def index
+    p ">>>>>>>>>>>>>>>>>>>>>>>>>>> Comfy access"
     return redirect_to :action => :new if ::Comfy::Cms::Site.count == 0
     @site = ::Comfy::Cms::Site.find_by_id(session[:site_id])
-    @sites ||= ::Comfy::Cms::Site.all
+    @site = nil unless @site.nil? || current_user.has_role?(@site.identifier.to_sym)
+    @sites ||= ::Comfy::Cms::Site.all.reject { |s| !current_user.has_role? s.identifier.to_sym }
+    
   end
 
   def new
@@ -53,6 +56,8 @@ protected
 
   def load_site
     @site = ::Comfy::Cms::Site.find(params[:id])
+    @site = nil unless @site.nil? || current_user.has_role?(@site.identifier.to_sym)
+    raise ActiveRecord::RecordNotFound if @site.nil?
     I18n.locale = ComfortableMexicanSofa.config.admin_locale || @site.locale
   rescue ActiveRecord::RecordNotFound
     flash[:error] = I18n.t('comfy.admin.cms.sites.not_found')

@@ -4,15 +4,16 @@
   
 - options = case object
   - when ::Comfy::Cms::Layout
-    - object.mirrors.collect{|m| [m.site.label, edit_comfy_admin_cms_site_layout_path(m.site, m)]}
+    - object.mirrors.collect{|m| [m.site.label, edit_comfy_admin_cms_site_layout_path(m.site, m) ] if current_user.has_role?(m.site.identifier.to_sym) } 
   - when ::Comfy::Cms::Page
-    - object.mirrors.collect{|m| [m.site.label, edit_comfy_admin_cms_site_page_path(m.site, m)]}
+    - object.mirrors.collect{|m| [m.site.label, edit_comfy_admin_cms_site_page_path(m.site, m)] if current_user.has_role?(m.site.identifier.to_sym) }
   - when ::Comfy::Cms::Snippet
-    - object.mirrors.collect{|m| [m.site.label, edit_comfy_admin_cms_site_snippet_path(m.site, m)]}
+    - object.mirrors.collect{|m| [m.site.label, edit_comfy_admin_cms_site_snippet_path(m.site, m)] if current_user.has_role?(m.site.identifier.to_sym) }
   - else
-    - (::Comfy::Cms::Site.mirrored - [@site]).collect{|s| [s.label, url_for(params.merge(:site_id => s))]}
+    - (::Comfy::Cms::Site.mirrored - [@site]).collect{|s| [s.label, url_for(params.merge(:site_id => s))] if current_user.has_role?(s.identifier.to_sym)}
 
 - options = [[@site.label, request.fullpath]] + options
+- options.compact!
 
 #mirrors.box
   = select_tag :mirror, options_for_select(options)
