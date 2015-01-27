@@ -61,6 +61,7 @@ module ComfortableMexicanSofa::Fixture
       self.site = Comfy::Cms::Site.where(:identifier => from).first!
       dir = self.class.name.split('::')[2].downcase.pluralize
       self.path = ::File.join(ComfortableMexicanSofa.config.fixtures_path, to, dir)
+      p self.path
     end
     
     def prepare_folder!(path)

@@ -11,8 +11,8 @@ class Comfy::Admin::Cms::SitesController < Comfy::Admin::Cms::BaseController
     return redirect_to '/users/sign_in'  if current_user.nil?
     return redirect_to :action => :new if ::Comfy::Cms::Site.count == 0
     @site = ::Comfy::Cms::Site.find_by_id(session[:site_id])
-    @site = nil unless @site.nil? || current_user.has_role?(@site.identifier.to_sym)
-    @sites ||= ::Comfy::Cms::Site.all.reject { |s| current_user.nil? || !current_user.has_role?(s.identifier.to_sym) }
+    @site = nil unless @site.nil? || (current_user.has_role?(@site.identifier.to_sym) || current_user.has_role?(:sysadmin))
+    @sites ||= ::Comfy::Cms::Site.all.reject { |s| current_user.nil? || (!current_user.has_role?(s.identifier.to_sym) && !current_user.has_role?(:sysadmin)) }
     
   end
 
@@ -57,7 +57,7 @@ protected
 
   def load_site
     @site = ::Comfy::Cms::Site.find(params[:id])
-    @site = nil unless @site.nil? || current_user.has_role?(@site.identifier.to_sym)
+    @site = nil unless @site.nil? || (current_user.has_role?(@site.identifier.to_sym) || current_user.has_role?(:sysadmin))
     raise ActiveRecord::RecordNotFound if @site.nil?
     I18n.locale = ComfortableMexicanSofa.config.admin_locale || @site.locale
   rescue ActiveRecord::RecordNotFound
