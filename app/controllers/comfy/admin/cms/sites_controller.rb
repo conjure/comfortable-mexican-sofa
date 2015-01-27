@@ -7,7 +7,6 @@ class Comfy::Admin::Cms::SitesController < Comfy::Admin::Cms::BaseController
   before_action :load_site,   :only => [:edit, :update, :destroy]
 
   def index
-    p ">>>>>>>>>>>>>>>>>>>>>>>>>>> Comfy access"
     return redirect_to '/users/sign_in'  if current_user.nil?
     return redirect_to :action => :new if ::Comfy::Cms::Site.count == 0
     @site = ::Comfy::Cms::Site.find_by_id(session[:site_id])
