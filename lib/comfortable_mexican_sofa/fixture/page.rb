@@ -3,7 +3,7 @@ module ComfortableMexicanSofa::Fixture::Page
     
     attr_accessor :target_pages
     
-    def import!(path = self.path, parent = nil)
+    def import!(path = self.path, parent = nil, clear = true)
       Dir["#{path}*/"].each do |path|
         slug = path.split('/').last
         
@@ -75,7 +75,7 @@ module ComfortableMexicanSofa::Fixture::Page
         self.fixture_ids << page.id
         
         # importing child pages
-        import!(path, page)
+        import!(path, page, clear)
       end
       
       # linking up target pages
@@ -89,7 +89,7 @@ module ComfortableMexicanSofa::Fixture::Page
       end
       
       # cleaning up
-      unless parent
+      if parent.nil? && clear
         self.site.pages.where('id NOT IN (?)', self.fixture_ids).each{ |s| s.destroy }
       end
     end
@@ -100,29 +100,33 @@ module ComfortableMexicanSofa::Fixture::Page
       prepare_folder!(self.path)
       
       self.site.pages.each do |page|
-        page.slug = 'index' if page.slug.blank?
-        page_path = File.join(path, page.ancestors.reverse.collect{|p| p.slug.blank?? 'index' : p.slug}, page.slug)
-        FileUtils.mkdir_p(page_path)
-
-        open(File.join(page_path, 'attributes.yml'), 'w') do |f|
-          f.write({
-            'label'         => page.label,
-            'layout'        => page.layout.try(:identifier),
-            'parent'        => page.parent && (page.parent.slug.present?? page.parent.slug : 'index'),
-            'target_page'   => page.target_page.try(:full_path),
-            'categories'    => page.categories.map{|c| c.label},
-            'is_published'  => page.is_published,
-            'position'      => page.position
-          }.to_yaml)
-        end
-        page.blocks_attributes.each do |block|
-          open(File.join(page_path, "#{block[:identifier]}.html"), 'w') do |f|
-            f.write(block[:content])
-          end
-        end
-        
-        ComfortableMexicanSofa.logger.warn("[FIXTURES] Exported Page \t #{page.full_path}")
+        export_page!(page)
       end
+    end
+
+    def export_page!(page)
+      page.slug = 'index' if page.slug.blank?
+      page_path = File.join(path, page.ancestors.reverse.collect{|p| p.slug.blank?? 'index' : p.slug}, page.slug)
+      FileUtils.mkdir_p(page_path)
+      
+      open(File.join(page_path, 'attributes.yml'), 'w') do |f|
+        f.write({
+                 'label'         => page.label,
+                 'layout'        => page.layout.try(:identifier),
+                 'parent'        => page.parent && (page.parent.slug.present?? page.parent.slug : 'index'),
+                 'target_page'   => page.target_page.try(:full_path),
+                 'categories'    => page.categories.map{|c| c.label},
+                 'is_published'  => page.is_published,
+                 'position'      => page.position
+                }.to_yaml)
+      end
+      page.blocks_attributes.each do |block|
+        open(File.join(page_path, "#{block[:identifier]}.html"), 'w') do |f|
+          f.write(block[:content])
+        end
+      end
+      
+      ComfortableMexicanSofa.logger.warn("[FIXTURES] Exported Page \t #{page.full_path}")
     end
   end
 end
